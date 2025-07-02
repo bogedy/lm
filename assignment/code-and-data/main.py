@@ -71,7 +71,7 @@ if __name__ == '__main__':
                     for _ in range(1):
                         model.eval()
                         start_token = tokenizer.tokenize("Hello")
-                        sampled = tokenizer.detokenize(model.sample_continuation(start_token, 500))
+                        sampled = tokenizer.detokenize(model.sample_continuation(start_token, 500, device=device))
                         model.train()
                         print(f"Model sample: '''{sampled}'''")
                     print("")

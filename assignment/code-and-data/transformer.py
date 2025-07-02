@@ -99,7 +99,7 @@ class TransformerLM(nn.Module):
                 pass
 
 
-    def sample_continuation(self, prefix: list[int], max_tokens_to_generate: int) -> list[int]:
+    def sample_continuation(self, prefix: list[int], max_tokens_to_generate: int, device=None) -> list[int]:
         feed_to_lm = prefix[:]
         generated = []
         with torch.no_grad():
@@ -107,7 +107,10 @@ class TransformerLM(nn.Module):
                 if len(feed_to_lm) > self.max_context_len:
                     # if we have more tokens than context length, trim it to context length.
                     feed_to_lm = feed_to_lm[-self.max_context_len:]
-                logits = self(torch.tensor([feed_to_lm], dtype=torch.int32).to(self.device))
+                feed_tensor = torch.tensor([feed_to_lm], dtype=torch.int32)
+                if device:
+                    feed_tensor = feed_tensor.to(device)
+                logits = self(feed_tensor)
                 logits_for_last_token = logits[0][-1]
                 distribution_for_last_token = F.softmax(logits_for_last_token)
                 sampled_token = torch.multinomial(distribution_for_last_token, num_samples=1)
