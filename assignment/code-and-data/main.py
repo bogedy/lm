@@ -37,9 +37,10 @@ if __name__ == '__main__':
             with_residuals = True,
         )
 
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = model.to(device)
+
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, betas=[0.9, 0.95])
-
-
 
     model.train()
     
@@ -50,7 +51,9 @@ if __name__ == '__main__':
             num_batches = num_batches + 1
 
             batch_x, batch_y = lm.batch_to_labeled_samples(batch)
-
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
+            
             logits = model(batch_x)
 
             loss = lm.compute_loss(logits, batch_y, ignore_index=tokenizer.pad_id())
