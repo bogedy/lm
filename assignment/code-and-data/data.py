@@ -5,6 +5,7 @@ from torch import nn
 import torch.nn.functional as F
 import random
 import glob
+import json
 
 class CharTokenizer:
     def __init__(self):
@@ -42,13 +43,23 @@ class CharTokenizer:
         return "".join(strs)
 
     def save(self, path: str) -> None:
-        # TODO: save it.
-        ...
+        with open(path, "w") as f:
+            json.dump({
+                "symbols": self.symbols,
+                "tokens": list(self.tokens),
+                "vocab": self.vocab,
+                "stoi": self.stoi
+            }, f)
 
     @staticmethod
     def load(path: str) -> CharTokenizer:
         tokenizer = CharTokenizer()
-        # TODO: load it.
+        with open(path, "r") as f:
+            data = json.load(f)
+            tokenizer.symbols = data["symbols"]
+            tokenizer.tokens = set(data["tokens"])
+            tokenizer.vocab = data["vocab"]
+            tokenizer.stoi = data["stoi"]
         return tokenizer
 
 class RandomOrderDataIterator:
@@ -67,7 +78,7 @@ class RandomOrderDataIterator:
 # This both creates the tokenizer and uses it to tokenize the data.
 # In a real system you'd like to split it to two separate functions.
 # Feel free to separate it to two functions also in this code.
-def load_data(path: str) -> [CharTokenizer, list[list[int]]]:
+def load_data(path: str) -> [CharTokenizer, list[list[int]], list[list[int]]]:
     tokenizer = CharTokenizer()
     for fname in glob.glob(f"{path}/*.txt"):
         with open(fname) as fh:
@@ -80,7 +91,19 @@ def load_data(path: str) -> [CharTokenizer, list[list[int]]]:
             text = fh.read()
             data.append(tokenizer.tokenize(text))
 
-    return (tokenizer, data)
+    test_split = 0.1
+    if len(data)==1:
+        split_idx = int(len(data[0]) * (1 - test_split))
+        train_data = [data[0][:split_idx]]
+        test_data = [data[0][split_idx:]]
+        print("train test lengths:", len(train_data[0]), len(test_data[0]))
+    else:
+        split_idx = int(len(data) * (1 - test_split))
+        train_data = data[:split_idx]
+        test_data = data[split_idx:]
+        print("train test lengths:", len(train_data[0]), print(len(test_data[0])))
+
+    return (tokenizer, train_data, test_data)
 
 def batch_items(data_iter: Iterator[list[int]], batch_size: int = 2) -> Iterator[torch.LongTensor]:
     batch = []

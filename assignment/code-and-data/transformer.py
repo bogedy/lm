@@ -5,27 +5,28 @@ import attention
 import mlp
 
 class TransformerDecoderBlock(nn.Module):
-    def __init__(self, n_heads: int, embed_size: int, mlp_hidden_size: int, max_context_len, with_residuals: bool = False):
+    def __init__(self, n_heads: int, embed_size: int, mlp_hidden_size: int, max_context_len, with_residuals: bool = False, dropout_rate = 0.1):
         super().__init__()
         self.causal_attention = attention.CausalSelfAttention(embed_size, n_heads, max_context_len)
         self.mlp = mlp.MLP(embed_size, mlp_hidden_size)
         self.layer_norm_1 = nn.LayerNorm(embed_size)
         self.layer_norm_2 = nn.LayerNorm(embed_size)
         self.with_residuals = with_residuals
+        self.dropout = nn.Dropout(dropout_rate)
 
     def forward(self, inputs):
         if self.with_residuals:
             # add residuals support.
             x1 = inputs
             x = self.layer_norm_1(x1)
-            x2 = self.causal_attention(x) + x1
+            x2 = self.dropout(self.causal_attention(x)) + x1
             x = self.layer_norm_2(x2)
             x = self.mlp(x) + x2
             return x
         else:
             x = inputs
             x = self.layer_norm_1(x)
-            x = self.causal_attention(x)
+            x = self.dropout(self.causal_attention(x))
             x = self.layer_norm_2(x)
             x = self.mlp(x)
             return x
@@ -59,13 +60,17 @@ class TransformerLM(nn.Module):
             vocab_size: int,
             mlp_hidden_size: int,
             with_residuals: bool,
+            init_method: str,
+            dropout_rate: float = 0.1,
             ):
         super().__init__()
         self.embed = Embed(vocab_size, embed_size, max_context_len)
-        self.layers = nn.ModuleList([TransformerDecoderBlock(n_heads, embed_size, mlp_hidden_size, max_context_len, with_residuals) for _ in range(n_layers)])
+        self.dropout = nn.Dropout(dropout_rate)
+        self.layers = nn.ModuleList([TransformerDecoderBlock(n_heads, embed_size, mlp_hidden_size, max_context_len, with_residuals, dropout_rate) for _ in range(n_layers)])
         self.layer_norm = nn.LayerNorm(embed_size)
         self.word_prediction = nn.Linear(embed_size, vocab_size)
         self.max_context_len = max_context_len
+        self.init_method = init_method
 
         self.init_weights()
 
@@ -74,6 +79,7 @@ class TransformerLM(nn.Module):
 
     def forward(self, inputs):
         x = self.embed(inputs)
+        x = self.dropout(x)
         for layer in self.layers:
             x = layer(x)
         x = self.layer_norm(x)
@@ -81,22 +87,23 @@ class TransformerLM(nn.Module):
         return logits
 
     def init_weights(self):
-        # initialize weights
-        # TODO implement initialization logic for embeddings and linear layers.
-        # The code break down the parameters by type (layer-norm, linear, embedding),
-        # but can also condition on individual names, for example by checking pn.endswith(...).
+        init_method = self.init_method # Default, will be overridden by the argument passed to __init__
+        
         for pn, p in self.named_parameters():
             if isinstance(p, nn.LayerNorm):
                 torch.nn.init.zeros_(p.bias)
                 torch.nn.init.ones_(p.weight)
             elif isinstance(p, nn.Linear):
-                # TODO initialize p.weight and p.bias (if it is not None).
-                # You can look at initializers in torch.nn.init
-                pass
+                if init_method == 'xavier':
+                    torch.nn.init.xavier_uniform_(p.weight)
+                elif init_method == 'kaiming':
+                    torch.nn.init.kaiming_uniform_(p.weight, mode='fan_in', nonlinearity='relu')
+                else:  # normal
+                    torch.nn.init.normal_(p.weight, mean=0.0, std=0.02)
+                if p.bias is not None:
+                    torch.nn.init.zeros_(p.bias)
             elif isinstance(p, nn.Embedding):
-                # TODO initialize p.weight and p.bias (if it is not None).
-                # You can look at initializers in torch.nn.init
-                pass
+                torch.nn.init.normal_(p.weight, mean=0.0, std=0.02)
 
 
     def sample_continuation(self, prefix: list[int], max_tokens_to_generate: int, device=None) -> list[int]:

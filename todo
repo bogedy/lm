@@ -1,0 +1,9 @@
+* plot the loss curves be reading those CSVs in a new script
+* optimizer settings
+
+* dropouts (after embedding layer, right after attention softmax, right after self attention)
+* save the tokenizer and checkpoint the model every 1000 batches, lets say (make this configurable).
+* add initializations: he, xavier, normal
+* save the loss curves as CSVs
+* play with num_heads, num_layers, embedding_dim
+* add learning rate
