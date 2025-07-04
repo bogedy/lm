@@ -78,7 +78,7 @@ class RandomOrderDataIterator:
 # This both creates the tokenizer and uses it to tokenize the data.
 # In a real system you'd like to split it to two separate functions.
 # Feel free to separate it to two functions also in this code.
-def load_data(path: str) -> [CharTokenizer, list[list[int]], list[list[int]]]:
+def load_data(path: str) -> tuple[CharTokenizer, list[list[int]], list[list[int]]]:
     tokenizer = CharTokenizer()
     for fname in glob.glob(f"{path}/*.txt"):
         with open(fname) as fh:
