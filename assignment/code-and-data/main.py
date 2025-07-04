@@ -15,7 +15,8 @@ def parse_args():
     parser.add_argument('--gradient_clipping', type=float, default=None, help='Gradient clipping value')
     parser.add_argument('--init_method', type=str, default='normal', 
                         choices=['normal', 'xavier', 'kaiming'],
-                        help='Weight initialization method (normal/xavier/kaiming)')
+                        help='Weight initialization method (normal/xavier/kaiming)'),
+    parser.add_argument('--model_dir', type=str, default=None, help='subdir in ./model_outputs to checkpoint to')
     parser.add_argument('--with_residuals', action='store_true', 
                     help='Whether to use residual connections in the transformer')
     parser.add_argument('--dropout_rate', type=float, default=0.1, 
@@ -48,15 +49,17 @@ if __name__ == '__main__':
     gradient_clipping = args.gradient_clipping
     num_batches_to_train = args.num_batches_to_train
 
-    def generate_output_dir(base_dir="model_outputs"):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        params_str = f"layers_{n_layers}_heads_{n_heads}_embed_{embed_size}"
-        output_dir = os.path.join(base_dir, f"{params_str}_{timestamp}_{random.randint(0, 9999)}") # add a random int because im paranoid that ill overwrite something lol
+    def generate_output_dir(base_dir="checkpoints", suffix=None):
+        if not suffix:    
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            params_str = f"layers_{n_layers}_heads_{n_heads}_embed_{embed_size}"
+            suffix = f"{params_str}_{timestamp}_{random.randint(0, 9999)}"
+        output_dir = os.path.join(base_dir, suffix) # add a random int because im paranoid that ill overwrite something lol
         os.makedirs(output_dir, exist_ok=True)
         return output_dir
     
-    output_dir = generate_output_dir()
-
+    output_dir = generate_output_dir(suffix = args.model_dir)
+    
     # initialize loss CSV file
     with open(os.path.join(output_dir, 'losses.csv'), mode='w', newline='') as f:
         csv_writer = csv.writer(f)
@@ -156,3 +159,4 @@ if __name__ == '__main__':
                         csv_writer = csv.writer(f)
                         csv_writer.writerow(['batch', 'train', 'test'])
                         csv_writer.writerows(loss_data)
+        break

@@ -119,7 +119,7 @@ class TransformerLM(nn.Module):
                     feed_tensor = feed_tensor.to(device)
                 logits = self(feed_tensor)
                 logits_for_last_token = logits[0][-1]
-                distribution_for_last_token = F.softmax(logits_for_last_token)
+                distribution_for_last_token = F.softmax(logits_for_last_token, dim=-1)
                 sampled_token = torch.multinomial(distribution_for_last_token, num_samples=1)
                 generated.append(sampled_token)
                 feed_to_lm.append(sampled_token)
