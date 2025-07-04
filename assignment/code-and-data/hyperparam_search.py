@@ -23,12 +23,10 @@ def objective(trial):
         "--embed_size", str(params["embed_size"]),
         "--learning_rate", str(params["learning_rate"]),
         "--batch_size", str(params["batch_size"]),
-        "--num_batches_to_train", "1000",
+        "--num_batches_to_train", "5000",
         "--model_dir", params['model_dir']
     ]
     subprocess.run(cmd, check=True)
-
-    print("got here?")
 
     # Find latest output dir and read results
     output_dir = Path("checkpoints") / model_dir
