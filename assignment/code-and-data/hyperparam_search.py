@@ -48,5 +48,7 @@ if __name__ == "__main__":
         print(f"  {key}: {value}")
 
     # Save importance analysis
-    fig = optuna.visualization.plot_param_importances(study)
-    fig.write_image("hyperparam_importance.png")
+    importances = optuna.importance.get_param_importances(study)
+    with open("hyperparam_importance.txt", "w") as f:
+        for param, importance in importances.items():
+            f.write(f"{param}: {importance}\n")
