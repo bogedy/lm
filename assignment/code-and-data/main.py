@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
             if num_batches % 10 == 0:
                 print(f"Seen {num_batches} batches. last loss is: {loss.item()}")
-                if num_batches % 100 == 0:
+                if num_batches % 500 == 0:
                     model.eval()
                     test_loss_total = 0
                     test_batches = 0
