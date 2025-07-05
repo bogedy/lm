@@ -16,7 +16,7 @@ def objective(trial):
         "gradient_clipping": trial.suggest_float("gradient_clipping", 0.1, 5.0),
         "init_method": trial.suggest_categorical("init_method", ["normal", "xavier", "kaiming"]),
         "with_residuals": trial.suggest_categorical("with_residuals", [True, False]),
-        "dropout_rate": trial.suggest_float("dropout_rate", 0.0, 0.5),
+        "dropout_rate": trial.suggest_float("dropout_rate", 0.0, 0.2),
         "model_dir": model_dir
     }
 
@@ -33,11 +33,14 @@ def objective(trial):
         "--seq_len", str(params["seq_len"]),
         "--gradient_clipping", str(params["gradient_clipping"]),
         "--init_method", params["init_method"],
-        "--with_residuals" if params["with_residuals"] else "",
         "--dropout_rate", str(params["dropout_rate"]),
         "--num_batches_to_train", "5000",
         "--model_dir", params['model_dir']
     ]
+
+    if params["with_residuals"]:
+        cmd.append("--with_residuals")
+
     subprocess.run(cmd, check=True)
 
     # Find latest output dir and read results
@@ -50,7 +53,7 @@ def objective(trial):
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=20, n_jobs = 10)
+    study.optimize(objective, n_trials=20, n_jobs = 20)
 
     print("Best trial:")
     trial = study.best_trial
