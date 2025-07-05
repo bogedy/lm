@@ -150,7 +150,7 @@ if __name__ == '__main__':
                         print(f"Model sample: '''{sampled}'''")
                     print("")
 
-                if num_batches % 500 == 0:
+                if num_batches % 1000 == 0:
                     torch.save(model.state_dict(), os.path.join(output_dir, f'checkpoint_{num_batches}.pth'))
                     with open(os.path.join(output_dir, f'sample_{num_batches}.txt'), 'w') as sample_file:
                         sample_file.write(sampled)

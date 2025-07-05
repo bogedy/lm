@@ -53,7 +53,7 @@ def objective(trial):
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=20, n_jobs = 20)
+    study.optimize(objective, n_trials=90, n_jobs = 30)
 
     print("Best trial:")
     trial = study.best_trial
